@@ -1,0 +1,63 @@
+version: '3.9'
+
+
+services:
+  postgresql_db:
+    container_name: postgres_orders
+    image: postgres:14
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
+      POSTGRES_DB: orders
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - psql_data:/var/lib/postgresql/data
+      - ./init_data/postgresql:/docker-entrypoint-initdb.d
+    ports:
+      - "5433:5432"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      start_period: 10s
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  
+  mysql_db:
+    container_name: mysql_returns
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+      MYSQL_DATABASE: returns
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init_data/mysql:/docker-entrypoint-initdb.d
+    restart: always
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -u $MYSQL_USER -p$MYSQL_PASSWORD"]
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 55
+  
+  clickhouse_db:
+    container_name: clickhouse_dwh 
+    image: clickhouse/clickhouse-server:24.8.4  
+    ports:  
+      - "8123:8123"  
+    restart: always
+    environment:  
+      CLICKHOUSE_USER: admin  
+      CLICKHOUSE_PASSWORD: admin
+      CLICKHOUSE_DB: dwh
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+
+volumes:
+  psql_data:
+  mysql_data:
+  clickhouse_data:
